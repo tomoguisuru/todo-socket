@@ -1,7 +1,7 @@
 const express    = require('express');
 const bodyParser = require('body-parser');
 const redis      = require('redis');
-const io         = require('socket.io').listen(5001);
+const io         = require('socket.io').listen(5001).of('/manage');
 
 const PORT = process.env.PORT || 3200;
 const REDIS_PORT = process.env.REDIS_PORT || 6379;
@@ -11,14 +11,29 @@ const app = express();
 
 const redisClient = redis.createClient({
   "host": REDIS_HOST,
-  "port": REDIS_PORT
+  "port": REDIS_PORT,
 });
 
 redisClient.subscribe('rt-change');
 
 io.on('connection', function(socket){
-  redisClient.on('message', function(channel, message){
-    socket.emit('rt-change', JSON.parse(message));
+
+  socket.on('join', function(channel) {
+    console.log('joined channel', channel);
+
+    socket.join(channel);
+  });
+
+  redisClient.on('message', function(id, message){
+    console.log('Message received!');
+    const data = JSON.parse(message);
+    const { channel } = data;
+
+    delete data.channel;
+
+    console.log('pushing message to channel: ', channel);
+
+    socket.emit('rt-change', data);
   });
 });
 
