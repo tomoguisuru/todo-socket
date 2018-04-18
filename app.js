@@ -9,16 +9,34 @@ const REDIS_HOST = process.env.REDIS_HOST || 'localhost';
 
 const app = express();
 
-const redisClient = redis.createClient({
+const subscriber = redis.createClient({
   "host": REDIS_HOST,
   "port": REDIS_PORT
 });
 
-redisClient.subscribe('rt-change');
+// subscriber.on('pmessage', function(pattern, channel, message) {
+//   console.log('sub pmessage', pattern, channel, message);
+//   const [event, room] = channel.split(':');
+//   const json = JSON.parse(message);
+//   io.to(room).emit(event, json);
+// });
 
-io.on('connection', function(socket){
-  redisClient.on('message', function(channel, message){
-    socket.emit('rt-change', JSON.parse(message));
+subscriber.on('message', function(channel, message) {
+  console.log('sub message', channel, message);
+  const json = JSON.parse(message);
+  io.to('company_1').emit(channel, json);
+});
+
+subscriber.on('psubscribe', function(channel, count) {
+  console.log('psub', channel, count);
+});
+
+// subscriber.psubscribe('model-change:*');
+subscriber.subscribe('model-change');
+
+io.sockets.on('connection', function(socket) {
+  socket.on('knock', function(channel) {
+    socket.join(channel);
   });
 });
 
@@ -34,7 +52,7 @@ function clientErrorHandler (err, req, res, next) {
       success: false,
     });
   } else {
-    next(err)
+    next(err);
   }
 }
 

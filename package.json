@@ -6,8 +6,8 @@
   "author": "Brandon Drake",
   "license": "MIT",
   "scripts": {
-    "start": "node server.js",
-    "start:dev": "nodemon --inspect server.js 3200"
+    "start": "node app.js",
+    "start:dev": "nodemon --inspect app.js 3200"
   },
   "devDependencies": {
     "nodemon": "^1.11.0"
